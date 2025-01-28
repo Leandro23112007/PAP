@@ -3,12 +3,13 @@ import csv
 import mysql.connector
 from datetime import datetime, timedelta
 from decimal import Decimal
+
     
 db_config = {
     'host': 'localhost',
-    'user': 'root',
-    'password': 'leandro',
-    'database': 'loja'  
+    'user': '12345',
+    'password': '12345',
+    'database': 'a'  
 }
 
 def codigo_existe_bd(codigo):
@@ -378,7 +379,8 @@ def imprimir_fatura(produto):
     print(f"✅ Fatura oficial para o produto '{produto['nome']}' gerada com sucesso!")
 
 def login():
-    print("Bem-vindo ao Sistema de Inventário!")
+
+    print("Bem-vindo ao GDS!")
     print("Escolha uma opção:")
     print("1. Entrar como Cliente (apenas consultar inventário)")
     print("2. Entrar como Administrador (acesso completo)")
@@ -406,6 +408,7 @@ def login():
 
 
 def executar():
+    limpar_tela()
     # Login inicial
     perfil = login()
 
