@@ -38,4 +38,8 @@
 - **Alterar Estado do Produto**: Modifique o estado dos produtos, como "disponível" ou "esgotado".
 - **Gerar Relatórios e Faturas**: Após a confirmação de venda, o sistema gera relatórios e faturas automaticamente.
 
+### Acesso como Administrador
+
+Para acessar o sistema como administrador, utilize a senha **`senhaadmin123`** ao fazer login. Isso dará acesso a funcionalidades exclusivas para gerenciamento do sistema.
+
 Agora o GDS está pronto para ser utilizado de forma eficiente no gerenciamento de inventário da sua loja!
