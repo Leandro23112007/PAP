@@ -28,7 +28,7 @@ echo CREATE TABLE IF NOT EXISTS produtos (ID INT(11) AUTO_INCREMENT PRIMARY KEY,
 mysql -u root --password=leandro < create_database.sql
 mysql -u root --password=leandro < create_tables.sql
 
-mysql -u root --password=leandro a < "%CaminhoProdutos%"
+mysql -u root --password=leandro loja < "%CaminhoProdutos%"
 
 pip install mysql-connector-python
 pip install csv
