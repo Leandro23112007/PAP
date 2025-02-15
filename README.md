@@ -1,6 +1,6 @@
 # Projeto de Controle de Vendas com Preços Automatizados
 
-Este projeto realiza o controle de inventário e vendas de produtos, com a funcionalidade adicional de automatizar a consulta de preços de smartphones no eBay, utilizando dados extraídos via ParseHub. Ele é desenvolvido em Python e inclui gerenciamento de inventário, cálculo de ganhos, geração de faturas e leitura de código de barras para automatizar as vendas.
+Este projeto realiza o controle de inventário e vendas de produtos, com a funcionalidade adicional de automatizar a consulta de preços de smartphones no eBay, utilizando dados extraídos via ParseHub e pedidos ao ChatGPT. Ele é desenvolvido em Python e inclui gerenciamento de inventário, cálculo de ganhos, geração de faturas e leitura de código de barras para automatizar as vendas.
 
 ## Estrutura do Projeto
 
