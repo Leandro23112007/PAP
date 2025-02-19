@@ -1,45 +1,28 @@
-# GDS - Gestor de Stocks
+# Projeto de Controle de Vendas com Preços Automatizados
 
-**GDS - Gestor de Stocks** é um sistema simples desenvolvido em Python, com o objetivo de gerir o inventário de uma loja, permitindo registar, adicionar e consultar produtos. O script permite também fazer o acompanhamento do estado dos produtos em estoque, o que facilita o controle das operações da loja. Este sistema foi desenvolvido como parte da Prova de Aptidão Profissional (PAP).
+Este projeto realiza o controle de inventário e vendas de produtos, com a funcionalidade adicional de automatizar a consulta de preços de smartphones no eBay, utilizando dados extraídos via ParseHub. Ele é desenvolvido em Python e inclui gerenciamento de inventário, cálculo de ganhos, geração de faturas e leitura de código de barras para automatizar as vendas.
+
+## Estrutura do Projeto
+
+`controle_vendas.py`**: Script principal para controle de vendas e inventário.
+`run_results.csv`**: Arquivo CSV gerado pelo ParseHub com os preços dos smartphones do eBay.
+`parsehub_project`**: Contém o projeto ParseHub responsável pelo web scraping dos preços de smartphones.
+`faturas/`**: Pasta onde são armazenadas as faturas geradas automaticamente após cada venda.
+`inventario_vendas.txt`**: Arquivo onde o inventário é salvo entre sessões.
+`venv/`**: Ambiente virtual com as dependências do projeto, incluindo scripts, bibliotecas e binários.
 
 ## Funcionalidades
 
-- **Registo de produtos**: Permite adicionar novos produtos ao inventário.
-- **Consulta de produtos**: Permite pesquisar por produtos existentes no sistema.
-- **Gestão de estados de produtos**: Permite alterar o estado dos produtos (por exemplo, se está disponível ou esgotado).
-- **Relatórios e faturas**: O sistema pode gerar relatórios sobre o estado do inventário e faturas de vendas (apenas após confirmação de venda).
+1. **Controle de Vendas**: Registra vendas, consulta inventário, calcula ganhos e confirmações de vendas.
+2. **Automação de Preços**: 
+   - Realiza scraping de preços de smartphones no eBay para atualizar o preço médio de venda automaticamente.
+   - Gera uma média de preços quando múltiplos resultados são encontrados, ou permite a inserção manual para produtos não listados.
+3. **Geração de Faturas**: Após cada venda, uma fatura é gerada e salva na pasta `faturas/`.
+4. **Consulta de Inventário**: Permite visualizar o inventário atualizado com quantidade de vendas e preços de cada item.
 
-## Tecnologias Utilizadas
+## Instalação e Configuração
 
-- **Python**: Linguagem de programação principal utilizada para o desenvolvimento do sistema.
-- **MySQL**: Base de dados utilizada para armazenar as informações sobre os produtos.
-- **Bibliotecas Python**:
-  - `mysql.connector`: Para conectar ao banco de dados MySQL.
-  - `os`: Para manipulação de arquivos e sistema.
-  - `csv`: Para leitura e escrita de arquivos CSV.
-  - `datetime` e `timedelta`: Para manipulação de datas e horas.
-  - `decimal`: Para lidar com valores monetários.
-
-## Como Configurar o Projeto
-
-1. **Abrir o arquivo `setup.bat`**:
-   - Abrir `setup.bat` (executar como admnistrador) para iniciar o processo de instalação.
-
-2. **Aguardar o fim das instalações**:
-   - O `setup.bat` irá instalar automaticamente todas as dependências necessárias para o funcionamento do GDS.
-
-3. **GDS pronto para usar**:
-   - Após o processo de instalação, o sistema estará pronto para ser utilizado.
-
-## Como Usar
-
-- **Adicionar um Novo Produto**: Escolha a opção para adicionar novos produtos ao inventário.
-- **Consultar Produtos**: Pesquise por nome, preço ou estado do produto.
-- **Alterar Estado do Produto**: Modifique o estado dos produtos, como "disponível" ou "esgotado".
-- **Gerar Relatórios e Faturas**: Após a confirmação de venda, o sistema gera relatórios e faturas automaticamente.
-
-### Acesso como Administrador
-
-Para acessar o sistema como administrador, utilize a senha **`leandro`** ao fazer login. Isso dará acesso a funcionalidades exclusivas para gerenciamento do sistema.
-
-Agora o GDS está pronto para ser utilizado de forma eficiente no gerenciamento de inventário da sua loja!
+1. **Clone o repositório**:
+   ```bash
+   git clone <url_do_repositorio>
+   cd <nome_da_pasta>

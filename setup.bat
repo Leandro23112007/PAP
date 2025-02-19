@@ -27,7 +27,7 @@ mariadb --version || ( echo Erro na instalação:Instalar Python manualmente & p
 
 :: Definir caminho do ficheiro CSV
 set "DIR=%~dp0"
-set "CaminhoProdutos=%DIR%produtos.csv"
+set "CaminhoProdutos=%DIR%Recursos\produtos.csv"
 echo %CaminhoProdutos%x
 
 del %DIR%python-installer.exe
@@ -52,7 +52,7 @@ mariadb -u root --password=%password% loja < "%CaminhoProdutos%"
 pip install mysql-connector-python
 
 :: Criar atalho no ambiente de trabalho
-powershell "$WshShell = New-Object -ComObject WScript.Shell; $shortcut = $WshShell.CreateShortcut([System.IO.Path]::Combine([System.Environment]::GetFolderPath('Desktop'), 'GDS-Gestor de stocks.lnk')); $shortcut.TargetPath = '%DIR%pap\GDS-Gestor de stocks.py'; $shortcut.IconLocation = '%DIR%logo.ico'; $shortcut.Save()"
+powershell "$WshShell = New-Object -ComObject WScript.Shell; $shortcut = $WshShell.CreateShortcut([System.IO.Path]::Combine([System.Environment]::GetFolderPath('Desktop'), 'GDS-Gestor de stocks.lnk')); $shortcut.TargetPath = '%DIR%pap\GDS-Gestor de stocks.py'; $shortcut.IconLocation = '%DIR%Recursos\logo.ico'; $shortcut.Save()"
 
 :: Iniciar o programa
 cls

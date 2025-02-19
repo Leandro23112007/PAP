@@ -1,5 +1,4 @@
-import os 
-import csv
+import os
 import mysql.connector
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -7,9 +6,9 @@ from decimal import Decimal
     
 db_config = {
     'host': 'localhost',
-    'user': '12345',
-    'password': '12345',
-    'database': 'a'  
+    'user': 'root',
+    'password': 'leandro',
+    'database': 'loja'  
 }
 
 def codigo_existe_bd(codigo):
@@ -396,7 +395,7 @@ def login():
         senha = input("Digite a senha de administrador: ")
         
         # Verifique a senha. Pode ser uma senha fixa ou consultada de outro lugar.
-        if senha == "senhaadmin123":  # Altere para a senha desejada
+        if senha == "leandro":  # Altere para a senha desejada
             return "administrador"
         else:
             print("Senha incorreta. Acesso negado.")

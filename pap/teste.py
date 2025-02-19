@@ -1,8 +1,8 @@
-import os 
-import csv
+import os
 import mysql.connector
 from datetime import datetime, timedelta
 from decimal import Decimal
+
     
 db_config = {
     'host': 'localhost',
@@ -197,25 +197,29 @@ def processar_preco(preco_str):
             print(f"Erro ao processar o preço: {preco_str}")
             return 0.0  # Retorna 0 se o preço não for válido
 
-def exibir_inventario_bd():
-    os.system('cls' if os.name == 'nt' else 'clear')  # Limpa a tela antes de mostrar o inventário
-    
-    termo_pesquisa = input("Digite o nome do produto para pesquisar (ou pressione Enter para voltar): ").strip().lower()
-    
-    if termo_pesquisa == "":  # Se o usuário pressionar Enter sem digitar nada, retorna ao menu
-        return
+def exibir_inventario_bd(cliente=True):
+    while True:  # Inicia o loop para o cliente
+        os.system('cls' if os.name == 'nt' else 'clear')  # Limpa a tela antes de mostrar o inventário
+        
+        termo_pesquisa = input("Digite o nome do produto para pesquisar (ou pressione Enter para voltar): ").strip().lower()
+        
+        if termo_pesquisa == "":  # Se o usuário pressionar Enter sem digitar nada, retorna ao menu
+            return
 
-    produtos_encontrados = [produto for produto in inventario.values() if termo_pesquisa in produto['nome'].lower()]
-    
-    if produtos_encontrados:
-        print("\nProdutos encontrados:")
-        for produto in produtos_encontrados:
-            preco_venda = float(produto['preco_venda'])  # Converte o preço para float
-            print(f"Nome: {produto['nome']}, Quantidade: {produto['quantidade']}, Preço: €{preco_venda:.2f}")
-    else:
-        print("\nNenhum produto encontrado com esse nome.")
+        produtos_encontrados = [produto for produto in inventario.values() if termo_pesquisa in produto['nome'].lower()]
+        
+        if produtos_encontrados:
+            print("\nProdutos encontrados:")
+            for produto in produtos_encontrados:
+                preco_venda = float(produto['preco_venda'])  # Converte o preço para float
+                print(f"Nome: {produto['nome']}, Quantidade: {produto['quantidade']}, Preço: €{preco_venda:.2f}")
+        else:
+            print("\nNenhum produto encontrado com esse nome.")
 
-    input("\nPressione Enter para voltar ao menu...")
+        if not cliente:  # Se não for cliente, o loop vai parar após mostrar os resultados
+            break
+
+        input("\nPressione Enter para continuar pesquisando ou voltar ao menu ...")
 
 
 def garantir_tabela_inventario(conexao):
@@ -238,76 +242,107 @@ def garantir_tabela_inventario(conexao):
         print(f"Erro ao garantir tabela: {err}")
 
 def confirmar_venda():
-    codigo = input("Digite o código de barras do produto para confirmar a venda: ")
+    while True:
+        codigo = input("Digite o código de barras do produto para confirmar a venda (ou 0 para voltar ao menu): ")
+
+        if codigo == "0":
+            return  # Sai da função e volta ao menu
+
+        if codigo not in inventario:
+            print("⚠️ Erro: Produto não encontrado no inventário!")
+            continue  # Pede um novo código de barras
+
+        produto = inventario[codigo]
+
+        quantidade_disponivel = produto["quantidade"]
+        if quantidade_disponivel <= 0:
+            print("⚠️ Erro: Estoque insuficiente para venda! Tente outro produto.")
+            continue  # Pede um novo código de barras
+
+        try:
+            preco_venda = Decimal(input(f"Digite o preço de venda para o produto {produto['nome']}: € "))
+        except:
+            print("⚠️ Erro: Insira um valor válido para o preço de venda.")
+            continue
+
+        # Pergunta o período de garantia
+        try:
+            garantia = int(input("Digite o período de garantia (em meses) para o produto: "))
+        except:
+            print("⚠️ Erro: Insira um número válido para a garantia.")
+            continue
+
+        # Atualizar histórico de vendas
+        try:
+            conexao = mysql.connector.connect(**db_config)
+            cursor = conexao.cursor()
+            data_venda = datetime.now().date()
+            cursor.execute("""
+                INSERT INTO historico_precos_venda (codigo_produto, nome_produto, preco_venda, data_venda, preco_compra, data_compra)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (codigo, produto["nome"], preco_venda, data_venda, produto["preco_compra"], produto.get("data_compra", data_venda)))
+            conexao.commit()
+
+            # Atualizar inventário
+            produto["quantidade"] -= 1
+            produto["vendas"] += 1
+
+            print(f"✅ Venda confirmada! Garantia de {garantia} meses para o produto {produto['nome']}.")
+            print("✅ Histórico de venda atualizado com sucesso!")
+            print("✅ Inventário atualizado com sucesso!")
+
+            # Criar e salvar fatura
+            produto_fatura = {
+                "nome": produto["nome"],
+                "preco_venda": preco_venda,
+                "data_venda": data_venda.strftime("%Y-%m-%d"),
+                "garantia": garantia,
+                "custo_envio": Decimal(0.0)  # Valor fixo de envio
+            }
+            imprimir_fatura(produto_fatura)
+
+            break  # Sai do loop após venda bem-sucedida
+
+        except mysql.connector.Error as erro:
+            print(f"❌ Erro ao registrar a venda no banco de dados: {erro}")
+
+        finally:
+            cursor.close()
+            conexao.close()
     
-    if codigo in inventario:
-        preco_venda = float(input(f"Digite o preço de venda para o produto {inventario[codigo]['nome']}: € "))
-        inventario[codigo]["preco_venda"] = preco_venda  # Atualiza o preço de venda do produto
-        inventario[codigo]["vendas"] += 1  # Incrementa a quantidade de vendas
-        inventario[codigo]["data_venda"] = datetime.now().date()  # Atualiza a data da última venda
-        
-        # Subtrai 1 unidade da quantidade no inventário
-        if inventario[codigo]["quantidade"] > 0:
-            inventario[codigo]["quantidade"] -= 1
-        else:
-            print("⚠️ Erro: Estoque insuficiente para venda!")
-
-        # Pergunta sobre a garantia
-        garantia = input("Digite o período de garantia (em meses) para o produto: ")
-        print(f"Venda confirmada! Garantia de {garantia} meses para o produto {inventario[codigo]['nome']}.")
-        
-        # Registra a venda no histórico
-        preco_compra = inventario[codigo]["preco_compra"]
-        data_compra = inventario[codigo]["data_venda"]  # Ou a data original de compra do inventário
-        
-        # Conexão com o banco de dados
-        conn = mysql.connector.connect(user='root', password='leandro', host='localhost', database='loja')
-        cursor = conn.cursor()
-
-        # Adiciona o histórico de preços
-        cursor.execute("""
-            INSERT INTO historico_precos_venda (codigo_produto, preco_venda, data_venda, preco_compra, data_compra)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (codigo, preco_venda, datetime.now().date(), preco_compra, data_compra))
-
-        # Confirma a alteração e fecha a conexão
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        print("Histórico de venda atualizado com sucesso!")
-        
-        # Atualiza o inventário no banco de dados
-        salvar_inventario_bd()
-        input("Pressione Enter para voltar ao menu.")
-    else:
-        print("Produto não encontrado no inventário.")
-        input("Pressione Enter para voltar ao menu.")
+    input("Pressione Enter para voltar ao menu.")
 
 def calcular_ganhos_ultimos_dias():
     dias = int(input("Digite o número de dias para calcular os ganhos das vendas confirmadas (0 para ganhos totais): "))
-    total_ganhos = Decimal(0.0)  # Altere para Decimal
+
+    # Conectar ao banco de dados
+    conexao = mysql.connector.connect(**db_config)
+    cursor = conexao.cursor()
 
     if dias == 0:  # Calcula os ganhos totais
-        for dados in inventario.values():
-            if dados["vendas"] > 0:  # Só considera as vendas confirmadas
-                # Converte ambos os valores para Decimal
-                preco_venda = Decimal(dados["preco_venda"])
-                preco_compra = Decimal(dados["preco_compra"])
-                ganho_unitario = preco_venda - preco_compra
-                total_ganhos += ganho_unitario * Decimal(dados["vendas"])  # Converte vendas para Decimal
-        print(f"Ganho total das vendas confirmadas: € {total_ganhos:.2f}")
-    else:  # Calcula os ganhos dos últimos X dias
-        data_limite = datetime.now() - timedelta(days=dias)
-        for dados in inventario.values():
-            if dados["vendas"] > 0 and dados["data_venda"] >= data_limite.replace(hour=0, minute=0, second=0, microsecond=0):
-                # Converte ambos os valores para Decimal
-                preco_venda = Decimal(dados["preco_venda"])
-                preco_compra = Decimal(dados["preco_compra"])
-                ganho_unitario = preco_venda - preco_compra
-                total_ganhos += ganho_unitario * Decimal(dados["vendas"])  # Converte vendas para Decimal
-        print(f"Ganho total das vendas confirmadas nos últimos {dias} dias: € {total_ganhos:.2f}")
+        cursor.execute("SELECT SUM(preco_venda) FROM historico_precos_venda")
+        total_ganhos = cursor.fetchone()[0]  # Pega o resultado da soma
 
+        if total_ganhos is None:  # Se não houver vendas, evitar erro de NoneType
+            total_ganhos = 0.0
+
+        print(f"\nGanho total das vendas confirmadas: € {total_ganhos:.2f}")
+
+    else:  # Calcula os ganhos dos últimos X dias
+        data_limite = (datetime.now() - timedelta(days=dias)).date()
+        cursor.execute("""
+            SELECT SUM(preco_venda) FROM historico_precos_venda WHERE data_venda >= %s
+        """, (data_limite,))
+        total_ganhos = cursor.fetchone()[0]  # Pega o resultado da soma
+
+        if total_ganhos is None:  # Se não houver vendas, evitar erro de NoneType
+            total_ganhos = 0.0
+
+        print(f"\nGanho total das vendas confirmadas nos últimos {dias} dias: € {total_ganhos:.2f}")
+
+    # Fecha a conexão
+    cursor.close()
+    conexao.close()
     input("Pressione Enter para voltar ao menu.")
 
 def imprimir_fatura(produto):
@@ -326,13 +361,13 @@ def imprimir_fatura(produto):
 
     custo_envio = produto.get('custo_envio', Decimal(0.0))  # Usa 0.0 como valor padrão se 'custo_envio' não estiver presente
 
-    total_com_iva = float(produto['preco_venda']) + float(valor_iva) + float(custo_envio)
+    total_com_iva = float(produto['preco_venda']) + valor_iva + float(custo_envio)
 
     # Abre o arquivo para escrever a fatura
     with open(nome_arquivo, "w", encoding="utf-8") as fatura:
         fatura.write(f"Data da Venda: {produto['data_venda']}\n\n")
         fatura.write(f"{produto['nome']}{'.' * (20 - len(produto['nome']))}{float(produto['preco_venda']):.2f} €\n")
-        fatura.write(f"Envio{'.' * 15}{custo_envio:.2f} €\n")
+        fatura.write(f"Envio{'.' * 15}{float(custo_envio):.2f} €\n")
         fatura.write(f"Garantia{'.' * 12}{produto.get('garantia', '1')} mês\n")
         fatura.write(f"IVA{'.' * 17}{int(iva_percentual * 100)} %\n\n")
         fatura.write(f"Total:{'.' * 14}{total_com_iva:.2f} €\n")
@@ -340,39 +375,77 @@ def imprimir_fatura(produto):
         fatura.write(f"{'-' * 28}\n")
         fatura.write("Obrigado pela sua compra!\n")
 
-    print(f"Fatura oficial para o produto '{produto['nome']}' gerada com sucesso!")
+    print(f"✅ Fatura oficial para o produto '{produto['nome']}' gerada com sucesso!")
 
-# Exemplo de chamada:
-produto = {'nome': 'iphone se', 'preco_venda': 499.99, 'data_venda': 'N/A'}
-imprimir_fatura(produto)
+def login():
+
+    print("Bem-vindo ao GDS!")
+    print("Escolha uma opção:")
+    print("1. Entrar como Cliente (apenas consultar inventário)")
+    print("2. Entrar como Administrador (acesso completo)")
+
+    escolha = input("Digite sua opção (1 ou 2): ")
+
+    if escolha == '1':
+        # Acesso como cliente, só pode ver o inventário
+        return "cliente"
+
+    elif escolha == '2':
+        # Acesso como administrador, precisa da senha
+        senha = input("Digite a senha de administrador: ")
+        
+        # Verifique a senha. Pode ser uma senha fixa ou consultada de outro lugar.
+        if senha == "leandro":  # Altere para a senha desejada
+            return "administrador"
+        else:
+            print("Senha incorreta. Acesso negado.")
+            return "negado"
+
+    else:
+        print("Opção inválida. Saindo...")
+        return "negado"
+
 
 def executar():
+    limpar_tela()
+    # Login inicial
+    perfil = login()
+
+    if perfil == "negado":
+        return  # Encerra o programa em caso de falha no login
+
     # Carregar inventário antes de iniciar o loop
     carregar_inventario_bd()
+
+    if perfil == "cliente":
+        # Se for cliente, vai direto para a opção de consultar o inventário
+        exibir_inventario_bd()
+        return  # Finaliza o programa após exibir o inventário
 
     while True:
         exibir_menu()
         opcao = input("\nEscolha uma opção: ")
 
-        if opcao == '1':
-            codigo = input("Digite o código de barras: ")
-            ler_codigo_barras(codigo)
+        if perfil == "administrador":  # Admin pode acessar todas as opções
+            if opcao == '1':
+                codigo = input("Digite o código de barras: ")
+                ler_codigo_barras(codigo)
 
-        elif opcao == '2':
-            exibir_inventario_bd()
+            elif opcao == '2':
+                exibir_inventario_bd()
 
-        elif opcao == '3':
-            calcular_ganhos_ultimos_dias()
+            elif opcao == '3':
+                calcular_ganhos_ultimos_dias()
 
-        elif opcao == '4':
-            confirmar_venda()
+            elif opcao == '4':
+                confirmar_venda()
 
-        elif opcao == '5':
-            print("Saindo...")
-            break
+            elif opcao == '5':
+                print("Saindo...")
+                break
 
-        else:
-            print("Opção inválida! Tente novamente.")
+            else:
+                print("Opção inválida! Tente novamente.")
 
 
 # Executa o menu
