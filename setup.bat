@@ -11,22 +11,24 @@ curl -o "%~dp0python-installer.exe" https://www.python.org/ftp/python/3.10.6/pyt
 start /wait "%~dp0python-installer.exe" /quiet InstallAllUsers=1 PrependPath=1
 
 :: Verificar instalação do Python
-python --version || (echo Erro na instalação do Python & pause & exit)
+python --version || ( start %~dp0python-installer.exe)
+echo Erro na instalação:Instalar Python manualmente & pause
 
 :: Atualizar pip
 python -m pip install --upgrade pip
 
 :: Baixar e instalar MariaDB
-curl -o "%~dp0mariadb-installer.msi" https://mirrors.ptisp.pt/mariadb//mariadb-10.6.20/winx64-packages/mariadb-10.6.20-winx64.msi
-start /wait msiexec /i "%~dp0mariadb-installer.msi" /qn /norestart
+winget install -e --id MariaDB.Server
 
 :: Verificar instalação do MariaDB
-mariadb --version || (echo Erro na instalação do MariaDB & pause & exit)
+
+mariadb --version || ( echo Erro na instalação:Instalar Python manualmente & pause & start %~dp0mariadb-installer.msi )
+
 
 :: Definir caminho do ficheiro CSV
 set "DIR=%~dp0"
 set "CaminhoProdutos=%DIR%produtos.csv"
-echo %CaminhoProdutos%
+echo %CaminhoProdutos%x
 
 del %DIR%python-installer.exe
 del %DIR%mariadb-installer.msi
@@ -39,9 +41,12 @@ echo CREATE TABLE IF NOT EXISTS inventario (ID INT AUTO_INCREMENT PRIMARY KEY, n
 echo CREATE TABLE IF NOT EXISTS produtos (ID INT(11) AUTO_INCREMENT PRIMARY KEY, product_name VARCHAR(255), product_preco VARCHAR(50), product_estado VARCHAR(50), data_adicao TIMESTAMP, url VARCHAR(2048), nome_produto VARCHAR(255)); >> create_tables.sql
 
 :: Criar base de dados e importar CSV
-mariadb -u root --password=leandro < create_database.sql
-mariadb -u root --password=leandro < create_tables.sql
-mariadb -u root --password=leandro loja < "%CaminhoProdutos%"
+
+echo Escolher uma palavra-passe para o MariaDB:
+set /p password=
+mariadb -u root --password=%password% < create_database.sql
+mariadb -u root --password=%password% < create_tables.sql
+mariadb -u root --password=%password% loja < "%CaminhoProdutos%"
 
 :: Instalar dependências Python
 pip install mysql-connector-python
@@ -51,6 +56,5 @@ powershell "$WshShell = New-Object -ComObject WScript.Shell; $shortcut = $WshShe
 
 :: Iniciar o programa
 cls
-echo Setup concluído!
-pause
+echo Setup concluído! & pause
 start python "%DIR%pap\GDS-Gestor de stocks.py"
