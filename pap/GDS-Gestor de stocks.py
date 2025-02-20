@@ -78,9 +78,9 @@ def ler_codigo_barras(codigo):
             preco_medio = processar_preco(produto_selecionado['product_preco'])
             print(f"Preço predefinido: €{preco_medio:.2f}.")
         else:
-            preco_medio = Decimal(input("Digite o preço estimado de venda: € "))  # Garantir que o preço seja Decimal
             print("Produto não encontrado no banco de dados.")
-
+            preco_medio = Decimal(input("Digite o preço estimado de venda: € "))  # Garantir que o preço seja Decimal
+            
         inventario[codigo] = {
             "nome": nome_produto,
             "vendas": 0,
