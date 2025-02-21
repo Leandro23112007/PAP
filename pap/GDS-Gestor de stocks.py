@@ -254,8 +254,7 @@ def confirmar_venda():
 
         produto = inventario[codigo]
 
-        quantidade_disponivel = produto["quantidade"]
-        if quantidade_disponivel <= 0:
+        if produto["quantidade"] <= 0:
             print("⚠️ Erro: Estoque insuficiente para venda! Tente outro produto.")
             continue  # Pede um novo código de barras
 
@@ -265,43 +264,53 @@ def confirmar_venda():
             print("⚠️ Erro: Insira um valor válido para o preço de venda.")
             continue
 
-        # Pergunta o período de garantia
         try:
             garantia = int(input("Digite o período de garantia (em meses) para o produto: "))
         except:
             print("⚠️ Erro: Insira um número válido para a garantia.")
             continue
 
-        # Atualizar histórico de vendas
         try:
             conexao = mysql.connector.connect(**db_config)
             cursor = conexao.cursor()
             data_venda = datetime.now().date()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO historico_precos_venda (codigo_produto, nome_produto, preco_venda, data_venda, preco_compra, data_compra)
                 VALUES (%s, %s, %s, %s, %s, %s)
-            """, (codigo, produto["nome"], preco_venda, data_venda, produto["preco_compra"], produto.get("data_compra", data_venda)))
-            conexao.commit()
-
-            # Atualizar inventário
+                """,
+                (codigo, produto["nome"], preco_venda, data_venda, produto["preco_compra"], produto.get("data_compra", data_venda))
+            )
+            
+            # Atualizar inventário no dicionário e no banco de dados
             produto["quantidade"] -= 1
-            produto["vendas"] += 1
+            produto["vendas"] = produto.get("vendas", 0) + 1
+            
+            cursor.execute(
+                """
+                UPDATE inventario
+                SET quantidade = %s, vendas = %s
+                WHERE codigo = %s
+                """,
+                (produto["quantidade"], produto["vendas"], codigo)
+            )
+            
+            conexao.commit()
 
             print(f"✅ Venda confirmada! Garantia de {garantia} meses para o produto {produto['nome']}.")
             print("✅ Histórico de venda atualizado com sucesso!")
             print("✅ Inventário atualizado com sucesso!")
 
-            # Criar e salvar fatura
             produto_fatura = {
                 "nome": produto["nome"],
                 "preco_venda": preco_venda,
                 "data_venda": data_venda.strftime("%Y-%m-%d"),
                 "garantia": garantia,
-                "custo_envio": Decimal(0.0)  # Valor fixo de envio
+                "custo_envio": Decimal(0.0)
             }
             imprimir_fatura(produto_fatura)
 
-            break  # Sai do loop após venda bem-sucedida
+            break
 
         except mysql.connector.Error as erro:
             print(f"❌ Erro ao registrar a venda no banco de dados: {erro}")
